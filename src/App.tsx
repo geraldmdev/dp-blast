@@ -69,17 +69,12 @@ function App() {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    const dx = clientX - centerX;
-    const dy = clientY - centerY;
-
-    startAngleRef.current = Math.atan2(dy, dx) * (180 / Math.PI);
+    startAngleRef.current = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
     const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
-      const moveX =
-        "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const moveY =
-        "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const moveX = "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveY = "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
       const currentAngle = Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
       const delta = currentAngle - startAngleRef.current;
@@ -99,6 +94,7 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
+  // Keyboard arrow movement
   useEffect(() => {
     const step = 5;
     const handleKey = (e: KeyboardEvent) => {
@@ -144,26 +140,13 @@ function App() {
         }}
       >
         {/* Logo + Name */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginTop: 20,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
           <img
             src="sits-logo.png"
             alt="SITS Logo"
             style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
           />
-          <span
-            style={{
-              fontSize: "1.3rem",
-              color: "#f5f5f5",
-              fontWeight: "bold",
-            }}
-          >
+          <span style={{ fontSize: "1.3rem", color: "#f5f5f5", fontWeight: "bold" }}>
             Society of Information Technology Students
           </span>
         </div>
@@ -263,7 +246,7 @@ function App() {
                 }
               }}
               onDoubleClick={() => setSelected((prev) => !prev)}
-              onTouchEnd={(_e: React.TouchEvent<HTMLDivElement>) => {
+              onTouchEnd={() => {
                 const now = Date.now();
                 const DOUBLE_TAP_DELAY = 300;
                 if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
