@@ -257,76 +257,84 @@ function App() {
         >
           {image && (
             <Rnd
-              size={size}
-              position={position}
-              bounds="parent"
-              lockAspectRatio
-              onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-              onResizeStop={(_e, _direction, ref, _delta, newPos) => {
-                const img = imgWrapperRef.current?.querySelector("img");
-                if (img) {
-                  const naturalRatio = img.naturalWidth / img.naturalHeight;
-                  const newWidth = ref.offsetWidth;
-                  setSize({ width: newWidth, height: newWidth / naturalRatio });
-                  setPosition(newPos);
-                }
+            size={size}
+            position={position}
+            bounds="parent"
+            lockAspectRatio
+            onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+            onResizeStop={(_e, _direction, ref, _delta, newPos) => {
+              const img = imgWrapperRef.current?.querySelector("img");
+              if (img) {
+                const naturalRatio = img.naturalWidth / img.naturalHeight;
+                const newWidth = ref.offsetWidth;
+                setSize({ width: newWidth, height: newWidth / naturalRatio });
+                setPosition(newPos);
+              }
+            }}
+            onDoubleClick={() => setSelected(prev => !prev)}  // desktop double click
+          >
+            <div
+              ref={imgWrapperRef}
+              onTouchEnd={handleTouchEnd}  // mobile double tap detection here
+              onClick={() => setSelected(prev => !prev)} // optional fallback for desktop clicks
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: `rotate(${rotation}deg)`,
+                transformOrigin: "center center",
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: selected ? "1px dashed #f5f5f5" : "none",
+                zIndex: 2,
+                touchAction: "manipulation",  // improves touch responsiveness
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                msUserSelect: "none",
               }}
-              onDoubleClick={() => setSelected((prev) => !prev)}
-              onTouchEnd={handleTouchEnd}
             >
-              <div
-                ref={imgWrapperRef}
+              <img
+                src={image}
+                alt="Uploaded"
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  transform: `rotate(${rotation}deg)`,
-                  transformOrigin: "center center",
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: selected ? "1px dashed #f5f5f5" : "none",
-                  zIndex: 2,
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                  pointerEvents: "none",
+                  userSelect: "none",
                 }}
-              >
-                <img
-                  src={image}
-                  alt="Uploaded"
+                draggable={false} // prevent unwanted drag on mobile
+              />
+              {selected && (
+                <div
+                  onMouseDown={startRotate}
+                  onTouchStart={startRotate}
                   style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    pointerEvents: "none",
+                    position: "absolute",
+                    top: "-25px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 24,
+                    height: 24,
+                    background: "#444",
+                    border: "1px solid #f5f5f5",
+                    borderRadius: "50%",
+                    cursor: "grab",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 14,
+                    fontWeight: "bold",
+                    zIndex: 3,
                   }}
-                />
-                {selected && (
-                  <div
-                    onMouseDown={startRotate}
-                    onTouchStart={startRotate}
-                    style={{
-                      position: "absolute",
-                      top: "-25px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: 24,
-                      height: 24,
-                      background: "#444",
-                      border: "1px solid #f5f5f5",
-                      borderRadius: "50%",
-                      cursor: "grab",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      zIndex: 3,
-                    }}
-                  >
-                    🔄
-                  </div>
-                )}
-              </div>
-            </Rnd>
+                >
+                  🔄
+                </div>
+              )}
+            </div>
+          </Rnd>
+
           )}
 
           {frame && (
