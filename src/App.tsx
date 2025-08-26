@@ -101,7 +101,7 @@ function App() {
   // Mobile double-tap handler
   const handleTouchEnd = () => {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
+    const DOUBLE_TAP_DELAY = 200;
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
       setSelected(prev => !prev);
     }
