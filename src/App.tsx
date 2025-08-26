@@ -7,6 +7,7 @@ function App() {
   const [frame, setFrame] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const [selected, setSelected] = useState(false);
+
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [size, setSize] = useState({ width: 150, height: 150 });
 
@@ -15,10 +16,9 @@ function App() {
 
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
-
   const lastTapRef = useRef<number>(0);
 
-  // Deselect when clicking outside
+  // Handle click/tap outside to deselect
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -41,7 +41,6 @@ function App() {
       setPosition({ x: 0, y: 0 });
       setSize({ width: 150, height: 150 });
       setRotation(0);
-      setSelected(false);
     }
   };
 
@@ -60,11 +59,9 @@ function App() {
     }
   };
 
-  // Rotate handler (desktop + mobile)
   const startRotate = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     if (!imgWrapperRef.current) return;
-
     const rect = imgWrapperRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -72,7 +69,10 @@ function App() {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    startAngleRef.current = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    const dx = clientX - centerX;
+    const dy = clientY - centerY;
+
+    startAngleRef.current = Math.atan2(dy, dx) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
     const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
@@ -99,15 +99,27 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Mobile double-tap
-  const handleMobileDoubleTap = () => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300; // ms
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      setSelected((prev) => !prev);
-    }
-    lastTapRef.current = now;
-  };
+  useEffect(() => {
+    const step = 5;
+    const handleKey = (e: KeyboardEvent) => {
+      setPosition((prev) => {
+        switch (e.key) {
+          case "ArrowUp":
+            return { ...prev, y: prev.y - step };
+          case "ArrowDown":
+            return { ...prev, y: prev.y + step };
+          case "ArrowLeft":
+            return { ...prev, x: prev.x - step };
+          case "ArrowRight":
+            return { ...prev, x: prev.x + step };
+          default:
+            return prev;
+        }
+      });
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   return (
     <div
@@ -146,7 +158,11 @@ function App() {
             style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
           />
           <span
-            style={{ fontSize: "1.3rem", color: "#f5f5f5", fontWeight: "bold" }}
+            style={{
+              fontSize: "1.3rem",
+              color: "#f5f5f5",
+              fontWeight: "bold",
+            }}
           >
             Society of Information Technology Students
           </span>
@@ -246,8 +262,15 @@ function App() {
                   setPosition(newPos);
                 }
               }}
-              onDoubleClick={() => setSelected(true)}
-              onTouchEnd={handleMobileDoubleTap} // double-tap for mobile
+              onDoubleClick={() => setSelected((prev) => !prev)}
+              onTouchEnd={(_e: React.TouchEvent<HTMLDivElement>) => {
+                const now = Date.now();
+                const DOUBLE_TAP_DELAY = 300;
+                if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+                  setSelected((prev) => !prev);
+                }
+                lastTapRef.current = now;
+              }}
             >
               <div
                 ref={imgWrapperRef}
@@ -267,7 +290,12 @@ function App() {
                 <img
                   src={image}
                   alt="Uploaded"
-                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", pointerEvents: "none" }}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                    pointerEvents: "none",
+                  }}
                 />
                 {selected && (
                   <div
@@ -349,7 +377,9 @@ function App() {
             borderRadius: 6,
           }}
         >
-          <div>Developed by <strong>Gerald Magda</strong> | VP Internal</div>
+          <div>
+            Developed by <strong>Gerald Magda</strong> | VP Internal
+          </div>
           <div>Access Computer College Manila Campus</div>
           <div>© 2025 DP Blast Web App</div>
         </div>
