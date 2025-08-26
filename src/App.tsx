@@ -58,34 +58,45 @@ function App() {
     }
   };
 
-  const startRotate = (e: React.MouseEvent) => {
+  const startRotate = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     if (!imgWrapperRef.current) return;
     const rect = imgWrapperRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    const dx = e.clientX - centerX;
-    const dy = e.clientY - centerY;
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    
+    const dx = clientX - centerX;
+    const dy = clientY - centerY;
 
     startAngleRef.current = Math.atan2(dy, dx) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
-    const moveHandler = (moveEvent: MouseEvent) => {
-      const dx2 = moveEvent.clientX - centerX;
-      const dy2 = moveEvent.clientY - centerY;
-      const currentAngle = Math.atan2(dy2, dx2) * (180 / Math.PI);
+    const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+      const moveX =
+      "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveY =
+        "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+      const currentAngle = Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
       const delta = currentAngle - startAngleRef.current;
       setRotation(startRotationRef.current + delta);
     };
 
     const stopHandler = () => {
-      document.removeEventListener("mousemove", moveHandler);
+      document.removeEventListener("mousemove", moveHandler as any);
       document.removeEventListener("mouseup", stopHandler);
+      document.removeEventListener("touchmove", moveHandler as any);
+      document.removeEventListener("touchend", stopHandler);
     };
 
-    document.addEventListener("mousemove", moveHandler);
-    document.addEventListener("mouseup", stopHandler);
+      document.addEventListener("mousemove", moveHandler as any);
+      document.addEventListener("mouseup", stopHandler);
+      document.addEventListener("touchmove", moveHandler as any, { passive: false });
+      document.addEventListener("touchend", stopHandler);
   };
 
   useEffect(() => {
@@ -253,6 +264,8 @@ function App() {
               position={position}
               bounds="parent"
               lockAspectRatio
+              enableResizing={{ top: true, right: true, bottom: true, left: true, topRight: true, bottomRight: true, bottomLeft: true, topLeft: true }}
+              dragHandleClassName="drag-handle"
               onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
               onResizeStop={(_e, _direction, ref, _delta, newPos) => {
                 const img = imgWrapperRef.current?.querySelector("img");
@@ -263,6 +276,7 @@ function App() {
                   setPosition(newPos);
                 }
               }}
+              enableUserSelectHack={false} // prevents selection issues on mobile
               onDoubleClick={() => setSelected(true)}
             >
               <div
@@ -293,6 +307,7 @@ function App() {
                 {selected && (
                   <div
                     onMouseDown={startRotate}
+                    onTouchStart={startRotate}
                     style={{
                       position: "absolute",
                       top: "-25px",
