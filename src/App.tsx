@@ -16,10 +16,7 @@ function App() {
 
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
-
-  // Long press for mobile
-  const longPressTimeout = useRef<number | null>(null);
-  const LONG_PRESS_DELAY = 400; // ms
+  const lastTapTime = useRef(0);
 
   // Handle click/tap outside to deselect
   useEffect(() => {
@@ -101,6 +98,16 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
+  // Mobile double-tap handler
+  const handleTouchEnd = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+      setSelected(prev => !prev);
+    }
+    lastTapTime.current = now;
+  };
+
   // Keyboard arrow movement
   useEffect(() => {
     const step = 5;
@@ -123,20 +130,6 @@ function App() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
-
-  // Mobile long-press handlers
-  const handleTouchStart = () => {
-    longPressTimeout.current = window.setTimeout(() => {
-      setSelected(prev => !prev);
-    }, LONG_PRESS_DELAY);
-  };
-
-  const handleTouchEnd = () => {
-    if (longPressTimeout.current) {
-      clearTimeout(longPressTimeout.current);
-      longPressTimeout.current = null;
-    }
-  };
 
   return (
     <div
@@ -270,9 +263,7 @@ function App() {
             >
               <div
                 ref={imgWrapperRef}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchEnd}
+                onTouchEnd={handleTouchEnd} // mobile double-tap
                 style={{
                   width: "100%",
                   height: "100%",
@@ -286,8 +277,6 @@ function App() {
                   zIndex: 2,
                   touchAction: "manipulation",
                   userSelect: "none",
-                  WebkitUserSelect: "none",
-                  msUserSelect: "none",
                 }}
               >
                 <img
