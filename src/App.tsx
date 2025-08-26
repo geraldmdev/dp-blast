@@ -19,12 +19,6 @@ function App() {
   const lastTapTime = useRef<number>(0);
   const tapTimeout = useRef<number | null>(null);
 
-  const pinchDataRef = useRef<{
-    startDist: number;
-    startSize: number;
-    startAngle: number;
-    startRotation: number;
-  } | null>(null);
 
   // Handle click/tap outside to deselect
   useEffect(() => {
@@ -80,19 +74,15 @@ function App() {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    startAngleRef.current =
-      Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    startAngleRef.current = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
     const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
-      const moveX =
-        "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const moveY =
-        "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const moveX = "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveY = "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
-      const currentAngle =
-        (Math.atan2(moveY - centerY, moveX - centerX) * 180) / Math.PI;
+      const currentAngle = Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
       const delta = currentAngle - startAngleRef.current;
       setRotation(startRotationRef.current + delta);
     };
@@ -110,55 +100,24 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Double tap detection
+  // Improved double tap detection for mobile
   const handleTouchEnd = (_e: React.TouchEvent) => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+      // Prevent triggering single tap action on second tap
       if (tapTimeout.current) {
         clearTimeout(tapTimeout.current);
         tapTimeout.current = null;
       }
       setSelected((prev) => !prev);
     } else {
+      // Delay single tap behavior if needed (none here)
       tapTimeout.current = setTimeout(() => {
         tapTimeout.current = null;
       }, DOUBLE_TAP_DELAY);
     }
     lastTapTime.current = now;
-  };
-
-  // Two-finger pinch and rotation
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length === 2 && imgWrapperRef.current && pinchDataRef.current) {
-      e.preventDefault();
-      const dx = e.touches[1].clientX - e.touches[0].clientX;
-      const dy = e.touches[1].clientY - e.touches[0].clientY;
-      const dist = Math.hypot(dx, dy);
-      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-
-      const scale = dist / pinchDataRef.current.startDist;
-      const newWidth = pinchDataRef.current.startSize * scale;
-      setSize({ width: newWidth, height: newWidth });
-
-      const deltaAngle = angle - pinchDataRef.current.startAngle;
-      setRotation(pinchDataRef.current.startRotation + deltaAngle);
-    }
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[1].clientX - e.touches[0].clientX;
-      const dy = e.touches[1].clientY - e.touches[0].clientY;
-      const dist = Math.hypot(dx, dy);
-      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-      pinchDataRef.current = {
-        startDist: dist,
-        startSize: size.width,
-        startAngle: angle,
-        startRotation: rotation,
-      };
-    }
   };
 
   // Keyboard arrow movement
@@ -303,7 +262,7 @@ function App() {
               bounds="parent"
               lockAspectRatio
               onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-              onResizeStop={(_e, _dir, ref, _delta, newPos) => {
+              onResizeStop={(_e, _direction, ref, _delta, newPos) => {
                 const img = imgWrapperRef.current?.querySelector("img");
                 if (img) {
                   const naturalRatio = img.naturalWidth / img.naturalHeight;
@@ -313,8 +272,6 @@ function App() {
                 }
               }}
               onDoubleClick={() => setSelected((prev) => !prev)}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
               <div
