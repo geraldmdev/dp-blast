@@ -264,8 +264,6 @@ function App() {
               position={position}
               bounds="parent"
               lockAspectRatio
-              enableResizing={{ top: true, right: true, bottom: true, left: true, topRight: true, bottomRight: true, bottomLeft: true, topLeft: true }}
-              dragHandleClassName="drag-handle"
               onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
               onResizeStop={(_e, _direction, ref, _delta, newPos) => {
                 const img = imgWrapperRef.current?.querySelector("img");
@@ -276,8 +274,8 @@ function App() {
                   setPosition(newPos);
                 }
               }}
-              enableUserSelectHack={false} // prevents selection issues on mobile
               onDoubleClick={() => setSelected(true)}
+              onTouchStart={() => setSelected(true)} // <-- Add this for mobile tap
             >
               <div
                 ref={imgWrapperRef}
