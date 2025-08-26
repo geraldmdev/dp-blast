@@ -16,8 +16,10 @@ function App() {
 
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
-  const lastTapTime = useRef<number>(0);
-  const tapTimeout = useRef<number | null>(null);
+
+  // Long press for mobile
+  const longPressTimeout = useRef<number | null>(null);
+  const LONG_PRESS_DELAY = 400; // ms
 
   // Handle click/tap outside to deselect
   useEffect(() => {
@@ -63,10 +65,9 @@ function App() {
     }
   };
 
-  const startRotate = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const startRotate = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     if (!imgWrapperRef.current) return;
-
     const rect = imgWrapperRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -100,29 +101,11 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Mobile double-tap detection
-  const handleTouchEnd = (_e: React.TouchEvent<HTMLDivElement>) => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-    if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
-      if (tapTimeout.current) {
-        clearTimeout(tapTimeout.current);
-        tapTimeout.current = null;
-      }
-      setSelected(prev => !prev);
-    } else {
-      tapTimeout.current = window.setTimeout(() => {
-        tapTimeout.current = null;
-      }, DOUBLE_TAP_DELAY);
-    }
-    lastTapTime.current = now;
-  };
-
   // Keyboard arrow movement
   useEffect(() => {
     const step = 5;
     const handleKey = (e: KeyboardEvent) => {
-      setPosition(prev => {
+      setPosition((prev) => {
         switch (e.key) {
           case "ArrowUp":
             return { ...prev, y: prev.y - step };
@@ -140,6 +123,20 @@ function App() {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
+
+  // Mobile long-press handlers
+  const handleTouchStart = () => {
+    longPressTimeout.current = window.setTimeout(() => {
+      setSelected(prev => !prev);
+    }, LONG_PRESS_DELAY);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
+    }
+  };
 
   return (
     <div
@@ -269,11 +266,13 @@ function App() {
                   setPosition(newPos);
                 }
               }}
-              onDoubleClick={() => setSelected(prev => !prev)}
+              onDoubleClick={() => setSelected(prev => !prev)} // desktop double-click
             >
               <div
                 ref={imgWrapperRef}
+                onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
                 style={{
                   width: "100%",
                   height: "100%",
