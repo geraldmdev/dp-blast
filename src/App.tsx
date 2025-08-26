@@ -16,11 +16,13 @@ function App() {
 
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
-  const lastTapRef = useRef<number>(0);
+  const lastTapTime = useRef<number>(0);
+  const tapTimeout = useRef<number | null>(null);
+
 
   // Handle click/tap outside to deselect
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
         selected &&
         imgWrapperRef.current &&
@@ -30,8 +32,11 @@ function App() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [selected]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,6 +78,7 @@ function App() {
     startRotationRef.current = rotation;
 
     const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+      moveEvent.preventDefault();
       const moveX = "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
       const moveY = "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
 
@@ -88,10 +94,30 @@ function App() {
       document.removeEventListener("touchend", stopHandler);
     };
 
-    document.addEventListener("mousemove", moveHandler as any);
+    document.addEventListener("mousemove", moveHandler as any, { passive: false });
     document.addEventListener("mouseup", stopHandler);
     document.addEventListener("touchmove", moveHandler as any, { passive: false });
     document.addEventListener("touchend", stopHandler);
+  };
+
+  // Improved double tap detection for mobile
+  const handleTouchEnd = (_e: React.TouchEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+      // Prevent triggering single tap action on second tap
+      if (tapTimeout.current) {
+        clearTimeout(tapTimeout.current);
+        tapTimeout.current = null;
+      }
+      setSelected((prev) => !prev);
+    } else {
+      // Delay single tap behavior if needed (none here)
+      tapTimeout.current = setTimeout(() => {
+        tapTimeout.current = null;
+      }, DOUBLE_TAP_DELAY);
+    }
+    lastTapTime.current = now;
   };
 
   // Keyboard arrow movement
@@ -246,14 +272,7 @@ function App() {
                 }
               }}
               onDoubleClick={() => setSelected((prev) => !prev)}
-              onTouchEnd={() => {
-                const now = Date.now();
-                const DOUBLE_TAP_DELAY = 300;
-                if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-                  setSelected((prev) => !prev);
-                }
-                lastTapRef.current = now;
-              }}
+              onTouchEnd={handleTouchEnd}
             >
               <div
                 ref={imgWrapperRef}
