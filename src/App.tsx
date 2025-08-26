@@ -19,7 +19,6 @@ function App() {
   const lastTapTime = useRef<number>(0);
   const tapTimeout = useRef<number | null>(null);
 
-
   // Handle click/tap outside to deselect
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
@@ -64,9 +63,10 @@ function App() {
     }
   };
 
-  const startRotate = (e: React.MouseEvent | React.TouchEvent) => {
+  const startRotate = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!imgWrapperRef.current) return;
+
     const rect = imgWrapperRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -100,20 +100,18 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Improved double tap detection for mobile
-  const handleTouchEnd = (_e: React.TouchEvent) => {
+  // Mobile double-tap detection
+  const handleTouchEnd = (_e: React.TouchEvent<HTMLDivElement>) => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
-      // Prevent triggering single tap action on second tap
       if (tapTimeout.current) {
         clearTimeout(tapTimeout.current);
         tapTimeout.current = null;
       }
-      setSelected((prev) => !prev);
+      setSelected(prev => !prev);
     } else {
-      // Delay single tap behavior if needed (none here)
-      tapTimeout.current = setTimeout(() => {
+      tapTimeout.current = window.setTimeout(() => {
         tapTimeout.current = null;
       }, DOUBLE_TAP_DELAY);
     }
@@ -124,7 +122,7 @@ function App() {
   useEffect(() => {
     const step = 5;
     const handleKey = (e: KeyboardEvent) => {
-      setPosition((prev) => {
+      setPosition(prev => {
         switch (e.key) {
           case "ArrowUp":
             return { ...prev, y: prev.y - step };
@@ -257,84 +255,82 @@ function App() {
         >
           {image && (
             <Rnd
-            size={size}
-            position={position}
-            bounds="parent"
-            lockAspectRatio
-            onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-            onResizeStop={(_e, _direction, ref, _delta, newPos) => {
-              const img = imgWrapperRef.current?.querySelector("img");
-              if (img) {
-                const naturalRatio = img.naturalWidth / img.naturalHeight;
-                const newWidth = ref.offsetWidth;
-                setSize({ width: newWidth, height: newWidth / naturalRatio });
-                setPosition(newPos);
-              }
-            }}
-            onDoubleClick={() => setSelected(prev => !prev)}  // desktop double click
-          >
-            <div
-              ref={imgWrapperRef}
-              onTouchEnd={handleTouchEnd}  // mobile double tap detection here
-              onClick={() => setSelected(prev => !prev)} // optional fallback for desktop clicks
-              style={{
-                width: "100%",
-                height: "100%",
-                transform: `rotate(${rotation}deg)`,
-                transformOrigin: "center center",
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                border: selected ? "1px dashed #f5f5f5" : "none",
-                zIndex: 2,
-                touchAction: "manipulation",  // improves touch responsiveness
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                msUserSelect: "none",
+              size={size}
+              position={position}
+              bounds="parent"
+              lockAspectRatio
+              onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+              onResizeStop={(_e, _direction, ref, _delta, newPos) => {
+                const img = imgWrapperRef.current?.querySelector("img");
+                if (img) {
+                  const naturalRatio = img.naturalWidth / img.naturalHeight;
+                  const newWidth = ref.offsetWidth;
+                  setSize({ width: newWidth, height: newWidth / naturalRatio });
+                  setPosition(newPos);
+                }
               }}
+              onDoubleClick={() => setSelected(prev => !prev)}
             >
-              <img
-                src={image}
-                alt="Uploaded"
+              <div
+                ref={imgWrapperRef}
+                onTouchEnd={handleTouchEnd}
                 style={{
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  objectFit: "contain",
-                  pointerEvents: "none",
+                  width: "100%",
+                  height: "100%",
+                  transform: `rotate(${rotation}deg)`,
+                  transformOrigin: "center center",
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: selected ? "1px dashed #f5f5f5" : "none",
+                  zIndex: 2,
+                  touchAction: "manipulation",
                   userSelect: "none",
+                  WebkitUserSelect: "none",
+                  msUserSelect: "none",
                 }}
-                draggable={false} // prevent unwanted drag on mobile
-              />
-              {selected && (
-                <div
-                  onMouseDown={startRotate}
-                  onTouchStart={startRotate}
+              >
+                <img
+                  src={image}
+                  alt="Uploaded"
                   style={{
-                    position: "absolute",
-                    top: "-25px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 24,
-                    height: 24,
-                    background: "#444",
-                    border: "1px solid #f5f5f5",
-                    borderRadius: "50%",
-                    cursor: "grab",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 14,
-                    fontWeight: "bold",
-                    zIndex: 3,
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                    pointerEvents: "none",
+                    userSelect: "none",
                   }}
-                >
-                  🔄
-                </div>
-              )}
-            </div>
-          </Rnd>
-
+                  draggable={false}
+                />
+                {selected && (
+                  <div
+                    onMouseDown={startRotate}
+                    onTouchStart={startRotate}
+                    style={{
+                      position: "absolute",
+                      top: "-25px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: 24,
+                      height: 24,
+                      background: "#444",
+                      border: "1px solid #f5f5f5",
+                      borderRadius: "50%",
+                      cursor: "grab",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 14,
+                      fontWeight: "bold",
+                      zIndex: 3,
+                    }}
+                  >
+                    🔄
+                  </div>
+                )}
+              </div>
+            </Rnd>
           )}
 
           {frame && (
