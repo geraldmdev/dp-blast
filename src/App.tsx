@@ -18,10 +18,13 @@ function App() {
   const startRotationRef = useRef(0);
   const lastTapTime = useRef(0);
 
-  // Handle click/tap outside to deselect
+  // Set tab title once
   useEffect(() => {
     document.title = "SITS | DP Blast";
+  }, []);
 
+  // Handle click/tap outside to deselect
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
         selected &&
