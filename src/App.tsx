@@ -15,8 +15,6 @@ function App() {
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
   const lastTapTime = useRef(0);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
 
   // Set tab title once
   useEffect(() => {
@@ -25,25 +23,20 @@ function App() {
 
   // Handle click/tap outside to deselect
   useEffect(() => {
-  const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-    if (!selected || !imgWrapperRef.current) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (!selected || !imgWrapperRef.current) return;
+      if (imgWrapperRef.current.contains(e.target as Node)) return;
+      setSelected(false);
+    };
 
-    // If click/tap is inside the wrapper, ignore
-    if (imgWrapperRef.current.contains(e.target as Node)) return;
+    document.addEventListener("mouseup", handleClickOutside);
+    document.addEventListener("touchend", handleClickOutside);
 
-    // Otherwise, deselect
-    setSelected(false);
-  };
-
-  document.addEventListener("mouseup", handleClickOutside);
-  document.addEventListener("touchend", handleClickOutside);
-
-  return () => {
-    document.removeEventListener("mouseup", handleClickOutside);
-    document.removeEventListener("touchend", handleClickOutside);
-  };
-}, [selected]);
-
+    return () => {
+      document.removeEventListener("mouseup", handleClickOutside);
+      document.removeEventListener("touchend", handleClickOutside);
+    };
+  }, [selected]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -80,15 +73,23 @@ function App() {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
 
-    startAngleRef.current = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    startAngleRef.current =
+      Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
     const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
-      const moveX = "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      const moveY = "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+      const moveX =
+        "touches" in moveEvent
+          ? moveEvent.touches[0].clientX
+          : moveEvent.clientX;
+      const moveY =
+        "touches" in moveEvent
+          ? moveEvent.touches[0].clientY
+          : moveEvent.clientY;
 
-      const currentAngle = Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
+      const currentAngle =
+        Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
       const delta = currentAngle - startAngleRef.current;
       setRotation(startRotationRef.current + delta);
     };
@@ -100,32 +101,22 @@ function App() {
       document.removeEventListener("touchend", stopHandler);
     };
 
-    document.addEventListener("mousemove", moveHandler as any, { passive: false });
+    document.addEventListener("mousemove", moveHandler as any, {
+      passive: false,
+    });
     document.addEventListener("mouseup", stopHandler);
-    document.addEventListener("touchmove", moveHandler as any, { passive: false });
+    document.addEventListener("touchmove", moveHandler as any, {
+      passive: false,
+    });
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Mobile double-tap or long-press handler
-  const handleTouchStart = () => {
-    // Start long press timer
-    longPressTimer.current = setTimeout(() => {
-      setSelected(prev => !prev); // toggle on long press
-    }, 400); // 400ms long press
-  };
-
+  // Handle double-tap (mobile)
   const handleTouchEnd = () => {
-    // Cancel long press if released early
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-
-    // Handle double-tap
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 250;
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
-      setSelected(prev => !prev); // toggle on double-tap
+      setSelected((prev) => !prev); // toggle on double-tap
     }
     lastTapTime.current = now;
   };
@@ -176,18 +167,42 @@ function App() {
         }}
       >
         {/* Logo + Name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginTop: 20,
+          }}
+        >
           <img
             src="sits-logo.png"
             alt="SITS Logo"
-            style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              objectFit: "cover",
+            }}
           />
-          <span style={{ fontSize: "1.3rem", color: "#f5f5f5", fontWeight: "bold" }}>
+          <span
+            style={{
+              fontSize: "1.3rem",
+              color: "#f5f5f5",
+              fontWeight: "bold",
+            }}
+          >
             Society of Information Technology Students
           </span>
         </div>
 
-        <h1 style={{ marginBottom: "20px", fontSize: "1.8rem", textAlign: "center" }}>
+        <h1
+          style={{
+            marginBottom: "20px",
+            fontSize: "1.8rem",
+            textAlign: "center",
+          }}
+        >
           Get Your Profile Now
         </h1>
 
@@ -277,16 +292,18 @@ function App() {
                 if (img) {
                   const naturalRatio = img.naturalWidth / img.naturalHeight;
                   const newWidth = ref.offsetWidth;
-                  setSize({ width: newWidth, height: newWidth / naturalRatio });
+                  setSize({
+                    width: newWidth,
+                    height: newWidth / naturalRatio,
+                  });
                   setPosition(newPos);
                 }
               }}
-              onDoubleClick={() => setSelected(prev => !prev)} // desktop double-click
+              onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
             >
               <div
                 ref={imgWrapperRef}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
+                onTouchEnd={handleTouchEnd} // mobile double-tap only
                 style={{
                   width: "100%",
                   height: "100%",
