@@ -25,24 +25,25 @@ function App() {
 
   // Handle click/tap outside to deselect
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (!selected || !imgWrapperRef.current) return;
+  const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+    if (!selected || !imgWrapperRef.current) return;
 
-      // If the click/tap is inside the wrapper, do nothing
-      if (imgWrapperRef.current.contains(e.target as Node)) return;
+    // If click/tap is inside the wrapper, ignore
+    if (imgWrapperRef.current.contains(e.target as Node)) return;
 
-      // Otherwise, deselect
-      setSelected(false);
-    };
+    // Otherwise, deselect
+    setSelected(false);
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
+  document.addEventListener("mouseup", handleClickOutside);
+  document.addEventListener("touchend", handleClickOutside);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [selected]);
+  return () => {
+    document.removeEventListener("mouseup", handleClickOutside);
+    document.removeEventListener("touchend", handleClickOutside);
+  };
+}, [selected]);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
