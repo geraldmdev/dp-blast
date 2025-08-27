@@ -180,7 +180,7 @@ function App() {
             style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
           />
           <span style={{ fontSize: "1.3rem", color: "#f5f5f5", fontWeight: "bold" }}>
-            Society of Information Technology Students
+            Society of Information Technology
           </span>
         </div>
 
