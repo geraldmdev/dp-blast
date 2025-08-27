@@ -1,3 +1,9 @@
+useEffect(() => {
+  document.title = "Test Title";
+  console.log("Title set");
+}, []);
+
+
 import { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { Rnd } from "react-rnd";
@@ -17,11 +23,6 @@ function App() {
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
   const lastTapTime = useRef(0);
-
-  // Set tab title once
-  useEffect(() => {
-    document.title = "SITS | DP Blast";
-  }, []);
 
   // Handle click/tap outside to deselect
   useEffect(() => {
