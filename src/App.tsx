@@ -7,23 +7,21 @@ function App() {
   const [frame, setFrame] = useState<string | null>(null);
   const [rotation, setRotation] = useState(0);
   const [selected, setSelected] = useState(false);
-
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [size, setSize] = useState({ width: 150, height: 150 });
 
   const previewRef = useRef<HTMLDivElement>(null);
   const imgWrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    document.title = "Test Title";
-    console.log("Title set");
-  }, []);
-
-
-
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
   const lastTapTime = useRef(0);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+
+  // Set tab title once
+  useEffect(() => {
+    document.title = "SITS | DP Blast";
+  }, []);
 
   // Handle click/tap outside to deselect
   useEffect(() => {
@@ -105,12 +103,26 @@ function App() {
     document.addEventListener("touchend", stopHandler);
   };
 
-  // Mobile double-tap handler
+  // Mobile double-tap or long-press handler
+  const handleTouchStart = () => {
+    // Start long press timer
+    longPressTimer.current = setTimeout(() => {
+      setSelected(prev => !prev); // toggle on long press
+    }, 400); // 400ms long press
+  };
+
   const handleTouchEnd = () => {
+    // Cancel long press if released early
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    // Handle double-tap
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 200;
+    const DOUBLE_TAP_DELAY = 250;
     if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
-      setSelected(prev => !prev);
+      setSelected(prev => !prev); // toggle on double-tap
     }
     lastTapTime.current = now;
   };
@@ -270,7 +282,8 @@ function App() {
             >
               <div
                 ref={imgWrapperRef}
-                onTouchEnd={handleTouchEnd} // mobile double-tap
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
                 style={{
                   width: "100%",
                   height: "100%",
