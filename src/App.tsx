@@ -26,16 +26,18 @@ function App() {
   // Handle click/tap outside to deselect
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (
-        selected &&
-        imgWrapperRef.current &&
-        !imgWrapperRef.current.contains(e.target as Node)
-      ) {
-        setSelected(false);
-      }
+      if (!selected || !imgWrapperRef.current) return;
+
+      // If the click/tap is inside the wrapper, do nothing
+      if (imgWrapperRef.current.contains(e.target as Node)) return;
+
+      // Otherwise, deselect
+      setSelected(false);
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("touchstart", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
@@ -185,7 +187,7 @@ function App() {
         </div>
 
         <h1 style={{ marginBottom: "20px", fontSize: "1.8rem", textAlign: "center" }}>
-          Get Your Profile Ngayon
+          Get Your Profile Now
         </h1>
 
         <input
