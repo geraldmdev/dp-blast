@@ -20,6 +20,8 @@ function App() {
 
   // Handle click/tap outside to deselect
   useEffect(() => {
+    document.title = "SITS | DP Blast";
+
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
         selected &&
