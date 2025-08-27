@@ -185,7 +185,7 @@ function App() {
         </div>
 
         <h1 style={{ marginBottom: "20px", fontSize: "1.8rem", textAlign: "center" }}>
-          Get Your Profile Now
+          Get Your Profile Ngayon
         </h1>
 
         <input
