@@ -9,32 +9,23 @@ function App() {
   const [selected, setSelected] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [size, setSize] = useState({ width: 150, height: 150 });
-  const [scale, setScale] = useState(1);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const imgWrapperRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const startAngleRef = useRef(0);
   const startRotationRef = useRef(0);
+  const lastTapTime = useRef(0);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Dynamically scale UI
+
+  // Set tab title once
   useEffect(() => {
-    const handleResize = () => {
-      if (!containerRef.current) return;
-      const baseWidth = 500;
-      const baseHeight = 800;
-      const scaleX = window.innerWidth / baseWidth;
-      const scaleY = window.innerHeight / baseHeight;
-      setScale(Math.min(scaleX, scaleY));
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
+    document.title = "SITS | DP Blast";
   }, []);
 
-  // Deselect image on outside click
+  // Handle click/tap outside to deselect
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (
         selected &&
         imgWrapperRef.current &&
@@ -44,8 +35,11 @@ function App() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, [selected]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,13 +54,10 @@ function App() {
 
   const handleDownload = async () => {
     if (previewRef.current) {
-      const rect = previewRef.current.getBoundingClientRect();
       const canvas = await html2canvas(previewRef.current, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        width: rect.width,
-        height: rect.height,
         backgroundColor: "#1e1e1e",
       });
       const link = document.createElement("a");
@@ -76,39 +67,67 @@ function App() {
     }
   };
 
-  const startRotate = (e: React.MouseEvent) => {
+  const startRotate = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     if (!imgWrapperRef.current) return;
     const rect = imgWrapperRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    startAngleRef.current =
-      Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+
+    startAngleRef.current = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
     startRotationRef.current = rotation;
 
-    const moveHandler = (moveEvent: MouseEvent) => {
-      const currentAngle =
-        (Math.atan2(
-          moveEvent.clientY - centerY,
-          moveEvent.clientX - centerX
-        ) *
-          180) /
-        Math.PI;
+    const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+      moveEvent.preventDefault();
+      const moveX = "touches" in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      const moveY = "touches" in moveEvent ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+      const currentAngle = Math.atan2(moveY - centerY, moveX - centerX) * (180 / Math.PI);
       const delta = currentAngle - startAngleRef.current;
       setRotation(startRotationRef.current + delta);
     };
 
     const stopHandler = () => {
-      document.removeEventListener("mousemove", moveHandler);
+      document.removeEventListener("mousemove", moveHandler as any);
       document.removeEventListener("mouseup", stopHandler);
+      document.removeEventListener("touchmove", moveHandler as any);
+      document.removeEventListener("touchend", stopHandler);
     };
 
-    document.addEventListener("mousemove", moveHandler);
+    document.addEventListener("mousemove", moveHandler as any, { passive: false });
     document.addEventListener("mouseup", stopHandler);
+    document.addEventListener("touchmove", moveHandler as any, { passive: false });
+    document.addEventListener("touchend", stopHandler);
   };
 
-  // Arrow key movement
+  // Mobile double-tap or long-press handler
+  const handleTouchStart = () => {
+    // Start long press timer
+    longPressTimer.current = setTimeout(() => {
+      setSelected(prev => !prev); // toggle on long press
+    }, 400); // 400ms long press
+  };
+
+  const handleTouchEnd = () => {
+    // Cancel long press if released early
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    // Handle double-tap
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 250;
+    if (now - lastTapTime.current < DOUBLE_TAP_DELAY) {
+      setSelected(prev => !prev); // toggle on double-tap
+    }
+    lastTapTime.current = now;
+  };
+
+  // Keyboard arrow movement
   useEffect(() => {
     const step = 5;
     const handleKey = (e: KeyboardEvent) => {
@@ -135,111 +154,72 @@ function App() {
     <div
       style={{
         width: "100vw",
-        height: "100vh",
-        backgroundColor: "#1e1e1e",
+        color: "#f5f5f5",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        fontFamily: "Arial, sans-serif",
       }}
     >
       <div
-        ref={containerRef}
         style={{
-          width: 500,
-          height: 800,
-          transform: `scale(${scale})`,
-          transformOrigin: "center center",
+          width: "80%",
+          maxWidth: "400px",
+          aspectRatio: "1",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          overflow: "visible",
+          justifyContent: "space-between",
         }}
       >
         {/* Logo + Name */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginTop: 20,
-            marginBottom: 20,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 20 }}>
           <img
             src="sits-logo.png"
             alt="SITS Logo"
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: "50%",
-              objectFit: "cover",
-            }}
+            style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
           />
-          <span
-            style={{
-              fontSize: "1.3rem",
-              color: "#f5f5f5",
-              fontWeight: "bold",
-            }}
-          >
-            Society of Information Technology Students
+          <span style={{ fontSize: "1.3rem", color: "#f5f5f5", fontWeight: "bold" }}>
+            Society of InformationTechnology
           </span>
         </div>
 
-        <h1
-          style={{
-            marginBottom: 20,
-            fontSize: "1.8rem",
-            color: "#f5f5f5",
-            textAlign: "center",
-          }}
-        >
+        <h1 style={{ marginBottom: "20px", fontSize: "1.8rem", textAlign: "center" }}>
           Get Your Profile Now
         </h1>
 
-        {/* Image Upload */}
-        <div style={{ width: "100%", marginBottom: 20 }}>
-          <label
-            htmlFor="file-upload"
-            style={{
-              display: "block",
-              padding: 10,
-              borderRadius: 6,
-              border: "1px solid #555",
-              backgroundColor: "#2c2c2c",
-              color: "#f5f5f5",
-              cursor: "pointer",
-              textAlign: "center",
-              width: "100%",
-            }}
-          >
-            Upload your picture
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            style={{ display: "none" }}
-          />
-        </div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          style={{
+            marginBottom: "20px",
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #555",
+            backgroundColor: "#2c2c2c",
+            color: "#f5f5f5",
+            cursor: "pointer",
+            width: "100%",
+          }}
+        />
 
-        {/* Frame Buttons */}
+        {/* Frame buttons */}
         <div
           style={{
-            marginBottom: 20,
+            marginBottom: "20px",
             display: "flex",
             justifyContent: "center",
             flexWrap: "wrap",
-            gap: 10,
+            gap: "10px",
             width: "100%",
           }}
         >
           <button
             onClick={() => setFrame("/frames/frame1.png")}
             style={{
-              padding: 10,
-              borderRadius: 6,
+              padding: "10px",
+              borderRadius: "6px",
               border: "1px solid #555",
               backgroundColor: "#2c2c2c",
               color: "#f5f5f5",
@@ -252,8 +232,8 @@ function App() {
           <button
             onClick={() => setFrame("/frames/frame2.png")}
             style={{
-              padding: 10,
-              borderRadius: 6,
+              padding: "10px",
+              borderRadius: "6px",
               border: "1px solid #555",
               backgroundColor: "#2c2c2c",
               color: "#f5f5f5",
@@ -272,13 +252,13 @@ function App() {
             position: "relative",
             width: "100%",
             aspectRatio: "1",
-            borderRadius: 12,
+            borderRadius: "12px",
             overflow: "hidden",
             border: "1px solid #555",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 20,
+            marginBottom: "20px",
             backgroundColor: "#2c2c2c",
           }}
         >
@@ -298,34 +278,43 @@ function App() {
                   setPosition(newPos);
                 }
               }}
+              onDoubleClick={() => setSelected(prev => !prev)} // desktop double-click
             >
               <div
                 ref={imgWrapperRef}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
                 style={{
                   width: "100%",
                   height: "100%",
+                  transform: `rotate(${rotation}deg)`,
+                  transformOrigin: "center center",
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   border: selected ? "1px dashed #f5f5f5" : "none",
                   zIndex: 2,
+                  touchAction: "manipulation",
+                  userSelect: "none",
                 }}
               >
                 <img
                   src={image}
                   alt="Uploaded"
                   style={{
-                    width: "100%",
-                    height: "100%",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
                     objectFit: "contain",
-                    transform: `rotate(${rotation}deg)`,
                     pointerEvents: "none",
+                    userSelect: "none",
                   }}
+                  draggable={false}
                 />
                 {selected && (
                   <div
                     onMouseDown={startRotate}
+                    onTouchStart={startRotate}
                     style={{
                       position: "absolute",
                       top: "-25px",
@@ -362,7 +351,6 @@ function App() {
                 left: 0,
                 width: "100%",
                 height: "100%",
-                objectFit: "contain",
                 pointerEvents: "none",
                 zIndex: 1,
                 opacity: selected ? 0.3 : 1,
@@ -371,24 +359,44 @@ function App() {
           )}
         </div>
 
-        {/* Download */}
         {image && frame && (
           <button
             onClick={handleDownload}
             style={{
-              padding: 12,
-              fontSize: 16,
+              padding: "12px",
+              fontSize: "16px",
               cursor: "pointer",
-              borderRadius: 6,
+              borderRadius: "6px",
               border: "none",
               backgroundColor: "#007bff",
               color: "#fff",
               width: "100%",
             }}
           >
-            ⬇️ Download DP
+            ⬇️ Download
           </button>
         )}
+
+        {/* Footer */}
+        <div
+          style={{
+            width: "100%",
+            padding: "10px 15px",
+            color: "#f5f5f5",
+            textAlign: "center",
+            fontSize: "0.9rem",
+            borderTop: "1px solid #444",
+            position: "relative",
+            marginTop: 20,
+            borderRadius: 6,
+          }}
+        >
+          <div>
+            Developed by <strong>Gerald Magda</strong> | VP Internal
+          </div>
+          <div>Access Computer College Manila Campus</div>
+          <div>© 2025 DP Blast Web App</div>
+        </div>
       </div>
     </div>
   );
