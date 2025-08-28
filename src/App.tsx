@@ -16,11 +16,6 @@ function App() {
   const startRotationRef = useRef(0);
   const lastTapTime = useRef(0);
 
-  // Set tab title once
-  // useEffect(() => {
-  //   document.title = "SITS | DP Blast";
-  // }, []);
-
   // Handle click/tap outside to deselect
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
@@ -80,11 +75,14 @@ function App() {
 
   const handleDownload = async () => {
     if (previewRef.current) {
+      const rect = previewRef.current.getBoundingClientRect();
       const canvas = await html2canvas(previewRef.current, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: null,
+        width: rect.width,   // ✅ capture only width of frame
+        height: rect.height, 
       });
       const link = document.createElement("a");
       link.download = "dp-blast.png";
@@ -309,120 +307,129 @@ function App() {
 
 
         {/* Preview */}
+<div
+  style={{
+    border: "1px solid #555", // 👈 border stays only for UI
+    marginBottom: "20px",
+    width: "100%",
+    aspectRatio: "1",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
+>
+  <div
+    ref={previewRef}
+    style={{
+      position: "relative",
+      width: "100%",
+      aspectRatio: "1",
+      overflow: "hidden",
+      backgroundColor: "transparent", // ✅ ensures transparent PNG
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    {image && (
+      <Rnd
+        size={size}
+        position={position}
+        bounds="parent"
+        lockAspectRatio
+        onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+        onResizeStop={(_e, _direction, ref, _delta, newPos) => {
+          const img = imgWrapperRef.current?.querySelector("img");
+          if (img) {
+            const naturalRatio = img.naturalWidth / img.naturalHeight;
+            const newWidth = ref.offsetWidth;
+            setSize({
+              width: newWidth,
+              height: newWidth / naturalRatio,
+            });
+            setPosition(newPos);
+          }
+        }}
+        onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
+      >
         <div
-          ref={previewRef}
+          ref={imgWrapperRef}
+          onTouchEnd={handleTouchEnd} // mobile double-tap only
           style={{
-            position: "relative",
             width: "100%",
-            aspectRatio: "1",
-            // borderRadius: "12px",
-            overflow: "hidden",
-            border: "1px solid #555",
+            height: "100%",
+            transform: `rotate(${rotation}deg)`,
+            transformOrigin: "center center",
+            position: "relative",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: "20px",
-            // backgroundColor: "#2c2c2c",
+            border: selected ? "1px dashed #f5f5f5" : "none",
+            zIndex: 2,
+            touchAction: "manipulation",
+            userSelect: "none",
           }}
         >
-          {image && (
-            <Rnd
-              size={size}
-              position={position}
-              bounds="parent"
-              lockAspectRatio
-              onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-              onResizeStop={(_e, _direction, ref, _delta, newPos) => {
-                const img = imgWrapperRef.current?.querySelector("img");
-                if (img) {
-                  const naturalRatio = img.naturalWidth / img.naturalHeight;
-                  const newWidth = ref.offsetWidth;
-                  setSize({
-                    width: newWidth,
-                    height: newWidth / naturalRatio,
-                  });
-                  setPosition(newPos);
-                }
-              }}
-              onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
-            >
-              <div
-                ref={imgWrapperRef}
-                onTouchEnd={handleTouchEnd} // mobile double-tap only
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  transform: `rotate(${rotation}deg)`,
-                  transformOrigin: "center center",
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: selected ? "1px dashed #f5f5f5" : "none",
-                  zIndex: 2,
-                  touchAction: "manipulation",
-                  userSelect: "none",
-                }}
-              >
-                <img
-                  src={image}
-                  alt="Uploaded"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                    pointerEvents: "none",
-                    userSelect: "none",
-                  }}
-                  draggable={false}
-                />
-                {selected && (
-                  <div
-                    onMouseDown={startRotate}
-                    onTouchStart={startRotate}
-                    style={{
-                      position: "absolute",
-                      top: "-25px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      width: 24,
-                      height: 24,
-                      background: "#444",
-                      border: "1px solid #f5f5f5",
-                      borderRadius: "50%",
-                      cursor: "grab",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 14,
-                      fontWeight: "bold",
-                      zIndex: 3,
-                    }}
-                  >
-                    🔄
-                  </div>
-                )}
-              </div>
-            </Rnd>
-          )}
-
-          {frame && (
-            <img
-              src={frame}
-              alt="Frame"
+          <img
+            src={image}
+            alt="Uploaded"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+            draggable={false}
+          />
+          {selected && (
+            <div
+              onMouseDown={startRotate}
+              onTouchStart={startRotate}
               style={{
                 position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                pointerEvents: "none",
-                zIndex: 1,
-                opacity: selected ? 0.3 : 1,
+                top: "-25px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 24,
+                height: 24,
+                background: "#444",
+                border: "1px solid #f5f5f5",
+                borderRadius: "50%",
+                cursor: "grab",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: "bold",
+                zIndex: 3,
               }}
-            />
+            >
+              🔄
+            </div>
           )}
         </div>
+      </Rnd>
+    )}
+
+    {frame && (
+      <img
+        src={frame}
+        alt="Frame"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 1,
+          opacity: selected ? 0.3 : 1,
+        }}
+      />
+    )}
+  </div>
+</div>
 
         {image && frame && (
           <button
@@ -464,6 +471,7 @@ function App() {
         </div>
       </div>
     </div>
+
   );
 }
 
