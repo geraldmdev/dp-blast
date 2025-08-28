@@ -329,6 +329,8 @@ function App() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      touchAction: "none",       // prevent Safari ghost layer
+      pointerEvents: selected ? "auto" : "none", 
     }}
   >
     {image && (
