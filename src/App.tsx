@@ -319,59 +319,63 @@ function App() {
   }}
 >
   <div
-    ref={previewRef}
-    style={{
-      position: "relative",
-      width: "100%",
-      aspectRatio: "1",
-      overflow: "hidden",
-      backgroundColor: "transparent", // ✅ ensures transparent PNG
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      touchAction: "none",       // prevent Safari ghost layer
-      pointerEvents: selected ? "auto" : "none", 
-    }}
-  >
-    {image && (
-      <Rnd
-        size={size}
-        position={position}
-        bounds="parent"
-        lockAspectRatio
-        onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-        onResizeStop={(_e, _direction, ref, _delta, newPos) => {
-          const img = imgWrapperRef.current?.querySelector("img");
-          if (img) {
-            const naturalRatio = img.naturalWidth / img.naturalHeight;
-            const newWidth = ref.offsetWidth;
-            setSize({
-              width: newWidth,
-              height: newWidth / naturalRatio,
-            });
-            setPosition(newPos);
-          }
+  ref={previewRef}
+  style={{
+    position: "relative",
+    width: "100%",
+    aspectRatio: "1",
+    overflow: "hidden",
+    backgroundColor: "transparent",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    touchAction: "none",
+  }}
+>
+  {image && (
+    <Rnd
+      size={size}
+      position={position}
+      bounds="parent"
+      lockAspectRatio
+      onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+      onResizeStop={(_e, _direction, ref, _delta, newPos) => {
+        const img = imgWrapperRef.current?.querySelector("img");
+        if (img) {
+          const naturalRatio = img.naturalWidth / img.naturalHeight;
+          const newWidth = ref.offsetWidth;
+          setSize({
+            width: newWidth,
+            height: newWidth / naturalRatio,
+          });
+          setPosition(newPos);
+        }
+      }}
+      onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
+      style={{
+        pointerEvents: "auto",         // ✅ keep draggable always working
+        touchAction: "manipulation",   // ✅ fix Safari taps
+      }}
+    >
+      <div
+        ref={imgWrapperRef}
+        onTouchEnd={handleTouchEnd}     // ✅ mobile double-tap
+        style={{
+          width: "100%",
+          height: "100%",
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: "center center",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: selected ? "1px dashed #f5f5f5" : "none",
+          zIndex: 2,
+          touchAction: "manipulation",
+          userSelect: "none",
         }}
-        onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
       >
-        <div
-          ref={imgWrapperRef}
-          onTouchEnd={handleTouchEnd} // mobile double-tap only
-          style={{
-            width: "100%",
-            height: "100%",
-            transform: `rotate(${rotation}deg)`,
-            transformOrigin: "center center",
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: selected ? "1px dashed #f5f5f5" : "none",
-            zIndex: 2,
-            touchAction: "manipulation",
-            userSelect: "none",
-          }}
-        >
+
           <img
             src={image}
             alt="Uploaded"
