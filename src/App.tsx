@@ -308,127 +308,119 @@ function App() {
 
         {/* Preview */}
 <div
+  ref={previewRef}
   style={{
-    border: "1px solid #555", // 👈 border stays only for UI
-    marginBottom: "20px",
+    position: "relative",
     width: "100%",
     aspectRatio: "1",
+    overflow: "hidden",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: "20px",
+    backgroundColor: "transparent",
+    border: "1px solid #555",
+    zIndex: 0, // ✅ keep preview below UI buttons
   }}
 >
-  <div
-    ref={previewRef}
-    style={{
-      position: "relative",
-      width: "100%",
-      aspectRatio: "1",
-      overflow: "hidden",
-      backgroundColor: "transparent", // ✅ ensures transparent PNG
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    {image && (
-      <Rnd
-        size={size}
-        position={position}
-        bounds="parent"
-        lockAspectRatio
-        onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
-        onResizeStop={(_e, _direction, ref, _delta, newPos) => {
-          const img = imgWrapperRef.current?.querySelector("img");
-          if (img) {
-            const naturalRatio = img.naturalWidth / img.naturalHeight;
-            const newWidth = ref.offsetWidth;
-            setSize({
-              width: newWidth,
-              height: newWidth / naturalRatio,
-            });
-            setPosition(newPos);
-          }
-        }}
-        onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
-      >
-        <div
-          ref={imgWrapperRef}
-          onTouchEnd={handleTouchEnd} // mobile double-tap only
-          style={{
-            width: "100%",
-            height: "100%",
-            transform: `rotate(${rotation}deg)`,
-            transformOrigin: "center center",
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: selected ? "1px dashed #f5f5f5" : "none",
-            zIndex: 2,
-            touchAction: "manipulation",
-            userSelect: "none",
-          }}
-        >
-          <img
-            src={image}
-            alt="Uploaded"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
-              objectFit: "contain",
-              pointerEvents: "none",
-              userSelect: "none",
-            }}
-            draggable={false}
-          />
-          {selected && (
-            <div
-              onMouseDown={startRotate}
-              onTouchStart={startRotate}
-              style={{
-                position: "absolute",
-                top: "-25px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 24,
-                height: 24,
-                background: "#444",
-                border: "1px solid #f5f5f5",
-                borderRadius: "50%",
-                cursor: "grab",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                fontWeight: "bold",
-                zIndex: 3,
-              }}
-            >
-              🔄
-            </div>
-          )}
-        </div>
-      </Rnd>
-    )}
-
-    {frame && (
-      <img
-        src={frame}
-        alt="Frame"
+  {image && (
+    <Rnd
+      size={size}
+      position={position}
+      bounds="parent"
+      lockAspectRatio
+      onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+      onResizeStop={(_e, _direction, ref, _delta, newPos) => {
+        const img = imgWrapperRef.current?.querySelector("img");
+        if (img) {
+          const naturalRatio = img.naturalWidth / img.naturalHeight;
+          const newWidth = ref.offsetWidth;
+          setSize({
+            width: newWidth,
+            height: newWidth / naturalRatio,
+          });
+          setPosition(newPos);
+        }
+      }}
+      onDoubleClick={() => setSelected((prev) => !prev)} // desktop double-click
+    >
+      <div
+        ref={imgWrapperRef}
+        onTouchEnd={handleTouchEnd} // mobile double-tap only
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
           width: "100%",
           height: "100%",
-          pointerEvents: "none",
-          zIndex: 1,
-          opacity: selected ? 0.3 : 1,
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: "center center",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: selected ? "1px dashed #f5f5f5" : "none",
+          zIndex: 1, // ✅ image wrapper stays below frame
+          touchAction: "manipulation",
+          userSelect: "none",
         }}
-      />
-    )}
-  </div>
+      >
+        <img
+          src={image}
+          alt="Uploaded"
+          style={{
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            pointerEvents: "none", // ✅ image never blocks touches
+            userSelect: "none",
+          }}
+          draggable={false}
+        />
+
+        {selected && (
+          <div
+            onMouseDown={startRotate}
+            onTouchStart={startRotate}
+            style={{
+              position: "absolute",
+              top: "-25px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 24,
+              height: 24,
+              background: "#444",
+              border: "1px solid #f5f5f5",
+              borderRadius: "50%",
+              cursor: "grab",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              fontWeight: "bold",
+              zIndex: 2, // ✅ rotate handle above image
+            }}
+          >
+            🔄
+          </div>
+        )}
+      </div>
+    </Rnd>
+  )}
+
+  {/* Frame Overlay */}
+  {frame && (
+    <img
+      src={frame}
+      alt="Frame"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 3, // ✅ frame always above uploaded image
+        pointerEvents: "none", // ✅ never blocks button clicks
+      }}
+    />
+  )}
 </div>
 
         {image && frame && (
