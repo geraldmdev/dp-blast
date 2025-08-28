@@ -315,7 +315,7 @@ function App() {
             position: "relative",
             width: "100%",
             aspectRatio: "1",
-            borderRadius: "12px",
+            // borderRadius: "12px",
             overflow: "hidden",
             border: "1px solid #555",
             display: "flex",
