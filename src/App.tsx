@@ -418,6 +418,9 @@ function App() {
         height: "100%",
         zIndex: 3, // ✅ frame always above uploaded image
         pointerEvents: "none", // ✅ never blocks button clicks
+        opacity: selected ? 0.5 : 1,   // reduce opacity when selected
+        transition: "opacity 0.2s ease-in-out", // smooth fade
+
       }}
     />
   )}
