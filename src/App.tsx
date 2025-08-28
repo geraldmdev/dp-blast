@@ -327,7 +327,7 @@ function App() {
     <Rnd
       size={size}
       position={position}
-      bounds="parent"
+      // bounds="parent"
       lockAspectRatio
       onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
       onResizeStop={(_e, _direction, ref, _delta, newPos) => {
@@ -366,9 +366,9 @@ function App() {
           src={image}
           alt="Uploaded"
           style={{
-            maxWidth: "100%",
-            maxHeight: "100%",
-            objectFit: "contain",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
             pointerEvents: "none", // ✅ image never blocks touches
             userSelect: "none",
           }}
