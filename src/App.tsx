@@ -431,8 +431,6 @@ function App() {
   </div>
 </div>
 
-
-
         {image && frame && (
           <button
             onClick={handleDownload}
