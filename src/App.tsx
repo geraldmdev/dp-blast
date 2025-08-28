@@ -17,9 +17,9 @@ function App() {
   const lastTapTime = useRef(0);
 
   // Set tab title once
-  useEffect(() => {
-    document.title = "SITS | DP Blast";
-  }, []);
+  // useEffect(() => {
+  //   document.title = "SITS | DP Blast";
+  // }, []);
 
   // Handle click/tap outside to deselect
   useEffect(() => {
@@ -41,12 +41,42 @@ function App() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const uploadedUrl = URL.createObjectURL(e.target.files[0]);
-      setImage(uploadedUrl);
-      setPosition({ x: 0, y: 0 });
-      setSize({ width: 150, height: 150 });
-      setRotation(0);
+      const img = new Image();
+      img.src = uploadedUrl;
+
+      img.onload = () => {
+        if (previewRef.current) {
+          const containerWidth = previewRef.current.offsetWidth;
+          const containerHeight = previewRef.current.offsetHeight;
+
+          const imgRatio = img.width / img.height;
+          const containerRatio = containerWidth / containerHeight;
+
+          let newWidth, newHeight;
+
+          if (imgRatio > containerRatio) {
+            // Image is wider → fit width
+            newWidth = containerWidth * 0.8; // 80% of container
+            newHeight = newWidth / imgRatio;
+          } else {
+            // Image is taller → fit height
+            newHeight = containerHeight * 0.8;
+            newWidth = newHeight * imgRatio;
+          }
+
+          // Center the image
+          const centerX = (containerWidth - newWidth) / 2;
+          const centerY = (containerHeight - newHeight) / 2;
+
+          setImage(uploadedUrl);
+          setSize({ width: newWidth, height: newHeight });
+          setPosition({ x: centerX, y: centerY });
+          setRotation(0);
+        }
+      };
     }
   };
+
 
   const handleDownload = async () => {
     if (previewRef.current) {
@@ -54,7 +84,7 @@ function App() {
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: "#1e1e1e",
+        backgroundColor: "#f5f5f5",
       });
       const link = document.createElement("a");
       link.download = "dp-blast.png";
@@ -227,41 +257,56 @@ function App() {
           style={{
             marginBottom: "20px",
             display: "flex",
-            justifyContent: "center",
-            flexWrap: "wrap",
+            justifyContent: "space-between",
             gap: "10px",
             width: "100%",
+            flexWrap: "nowrap",
           }}
         >
           <button
             onClick={() => setFrame("/frames/frame1.png")}
             style={{
+              flex: "1",
               padding: "10px",
               borderRadius: "6px",
               border: "1px solid #555",
               backgroundColor: "#2c2c2c",
               color: "#f5f5f5",
               cursor: "pointer",
-              flex: "1 1 45%",
             }}
           >
-            Frame 1
+            1ST YEAR
           </button>
           <button
             onClick={() => setFrame("/frames/frame2.png")}
             style={{
+              flex: "1",
               padding: "10px",
               borderRadius: "6px",
               border: "1px solid #555",
               backgroundColor: "#2c2c2c",
               color: "#f5f5f5",
               cursor: "pointer",
-              flex: "1 1 45%",
             }}
           >
-            Frame 2
+            2ND YEAR
+          </button>
+          <button
+            onClick={() => setFrame("/frames/frame3.png")}
+            style={{
+              flex: "1",
+              padding: "10px",
+              borderRadius: "6px",
+              border: "1px solid #555",
+              backgroundColor: "#2c2c2c",
+              color: "#f5f5f5",
+              cursor: "pointer",
+            }}
+          >
+            3RD YEAR
           </button>
         </div>
+
 
         {/* Preview */}
         <div
@@ -277,7 +322,7 @@ function App() {
             alignItems: "center",
             justifyContent: "center",
             marginBottom: "20px",
-            backgroundColor: "#2c2c2c",
+            // backgroundColor: "#2c2c2c",
           }}
         >
           {image && (
