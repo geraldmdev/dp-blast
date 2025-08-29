@@ -17,7 +17,7 @@ function App() {
   const lastTapTime = useRef(0);
 
   // Handle click/tap outside to deselect
-  useEffect(() => {
+  useEffect(() => {1
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (!selected || !imgWrapperRef.current) return;
       if (imgWrapperRef.current.contains(e.target as Node)) return;
@@ -80,7 +80,7 @@ function App() {
         scale: 3,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null,
+        backgroundColor: "#f5f5f5",
         width: rect.width,   // ✅ capture only width of frame
         height: rect.height, 
       });
